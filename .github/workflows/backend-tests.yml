@@ -1,0 +1,63 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: afp_user
+          POSTGRES_PASSWORD: afp_password
+          POSTGRES_DB: afp_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U afp_user -d afp_db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+psycopg2://afp_user:afp_password@localhost:5432/afp_db
+      POSTGRES_USER: afp_user
+      POSTGRES_PASSWORD: afp_password
+      POSTGRES_DB: afp_db
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      REDIS_URL: redis://localhost:6379/0
+      CELERY_BROKER_URL: redis://localhost:6379/0
+      CELERY_RESULT_BACKEND: redis://localhost:6379/1
+      SECRET_KEY: ci-test-secret-key-not-for-production
+      ENVIRONMENT: test
+      DEBUG: "false"
+      LLM_API_KEY: ""
+      LLM_MODEL: gemini-1.5-flash
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run pytest
+        working-directory: backend
+        run: python -m pytest -v
