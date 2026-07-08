@@ -1,0 +1,33 @@
+# --- Python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# --- Ortam değişkenleri (asla commitlenmez) ---
+.env
+*.env.local
+
+# --- Veritabanı ---
+*.db
+*.sqlite3
+
+# --- ML artifacts (büyük dosyalar, ayrı versiyonlama gerekir) ---
+backend/ml_artifacts/*.pkl
+backend/ml_artifacts/*.onnx
+
+# --- Node / Frontend ---
+node_modules/
+dist/
+.vite/
+
+# --- IDE ---
+.vscode/
+.idea/
+
+# --- Logs ---
+*.log
+
+# --- OS ---
+.DS_Store
