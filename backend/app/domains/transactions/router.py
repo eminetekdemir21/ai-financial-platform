@@ -1,4 +1,4 @@
-"""
+﻿"""
 Transactions domain router.
 GUNCELLEME: Dosya yuklendikten sonra kategorilendirme otomatik
 tetikleniyor - kullanicinin ekstra bir istek yapmasina gerek yok.
@@ -101,7 +101,7 @@ def upload_excel(
 @router.get("/list", response_model=list[schemas.TransactionResponse])
 def list_transactions(
     account_id: uuid.UUID,
-    limit: int = Query(default=100, le=500),
+    limit: int = Query(default=500, le=1000),
     offset: int = Query(default=0, ge=0),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -109,3 +109,4 @@ def list_transactions(
     """Belirtilen hesabin islemlerini listeler."""
     service.verify_account_ownership(db=db, account_id=account_id, user_id=current_user.id)
     return service.list_transactions(db=db, account_id=account_id, limit=limit, offset=offset)
+

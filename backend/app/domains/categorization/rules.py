@@ -1,4 +1,4 @@
-"""
+﻿"""
 Kural tabanli kategorilendirme.
 Islem aciklamasinda/satici adinda gecen anahtar kelimelere gore
 hizli, kesin (deterministik) kategori atamasi yapar. Bu katman
@@ -19,7 +19,7 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
     ],
     "ulasim": [
         "benzin", "akaryakit", "otopark", "taksi", "uber", "bitaksi",
-        "otobus", "metro", "iett", "istanbulkart", "tren", "ucak",
+        "otobus", "metro", "iett", "istanbulkart", "tren bileti", "tcdd", "ucak",
         "pegasus", "thy", "shell", "opet", "petrol ofisi", "bp",
     ],
     "alisveris": [
@@ -59,13 +59,13 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
 def normalize(text: str) -> str:
     """
     Turkce karakterleri sadelestirip metni kucuk harfe cevirir.
-    Bu sayede "Elektrik Faturası" ile "elektrik faturasi" ayni
+    Bu sayede "Elektrik FaturasÄ±" ile "elektrik faturasi" ayni
     sekilde eslesir - encoding/harf farkliliklarina karsi dayaniklilik.
     """
     text = text.lower()
     replacements = {
-        "ı": "i", "İ": "i", "ş": "s", "ç": "c",
-        "ğ": "g", "ö": "o", "ü": "u",
+        "Ä±": "i", "Ä°": "i", "ÅŸ": "s", "Ã§": "c",
+        "ÄŸ": "g", "Ã¶": "o", "Ã¼": "u",
     }
     for src, dst in replacements.items():
         text = text.replace(src, dst)
@@ -84,3 +84,4 @@ def match_rule(description: str, merchant: str | None = None) -> str | None:
             if normalize(kw) in haystack:
                 return category
     return None
+
