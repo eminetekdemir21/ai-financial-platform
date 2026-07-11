@@ -1,4 +1,4 @@
-name: Backend Tests
+name: CI Tests
 
 on:
   push:
@@ -7,9 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  backend-tests:
+    name: Backend Tests (pytest)
     runs-on: ubuntu-latest
-
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -24,7 +24,6 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-
     env:
       DATABASE_URL: postgresql+psycopg2://afp_user:afp_password@localhost:5432/afp_db
       POSTGRES_USER: afp_user
@@ -40,7 +39,6 @@ jobs:
       DEBUG: "false"
       LLM_API_KEY: ""
       LLM_MODEL: gemini-1.5-flash
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -61,3 +59,25 @@ jobs:
       - name: Run pytest
         working-directory: backend
         run: python -m pytest -v
+
+  frontend-tests:
+    name: Frontend Tests (vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run vitest
+        working-directory: frontend
+        run: npm test
