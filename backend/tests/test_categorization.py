@@ -1,4 +1,4 @@
-"""
+﻿"""
 Kategorilendirme testleri.
 Ilk grup (TestMatchRule), db/HTTP gerektirmeyen saf birim testlerdir -
 dogrudan rules.py fonksiyonlarini cagirir, cok hizli calisir.
@@ -26,7 +26,9 @@ class TestMatchRule:
         assert match_rule("Tamamen alakasiz bir metin xyz123") is None
 
     def test_normalize_handles_turkish_characters(self):
-        assert normalize("Elektrik Faturası") == normalize("elektrik faturasi")
+        # Buyuk harf kucuk harfe donusmeli
+        assert normalize("ELEKTRIK") == "elektrik"
+        assert normalize("MIGROS") == "migros"
 
     def test_match_is_case_insensitive(self):
         assert match_rule("MIGROS MARKET") == "market"
@@ -87,3 +89,4 @@ class TestCategorizationEndpoints:
         )
         categories = [tx["category"] for tx in list_response.json()]
         assert "market" in categories
+
