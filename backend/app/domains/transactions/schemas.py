@@ -46,3 +46,18 @@ class UploadResult(BaseModel):
     # dosyayi yanlislikla iki kez yuklerse, ikinci yuklemede bu sayi
     # yukledigi satir sayisina esit, imported_count ise 0 olur.
     skipped_duplicates: int = 0
+
+
+class ConnectBankRequest(BaseModel):
+    bank_name: str
+
+
+class ConnectBankResult(BaseModel):
+    """
+    'Bankami Bagla' (Demo Open Banking) akisinin sonucu. Gercek bir banka
+    API'sine baglanmak yerine, gercekci gorunumlu bir islem gecmisi
+    otomatik olusturulup hesaba eklenir ve kategorilendirilir.
+    """
+    account: AccountResponse
+    imported_count: int
+    categorized_count: int

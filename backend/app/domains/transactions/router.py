@@ -1,4 +1,4 @@
-﻿"""
+"""
 Transactions domain router.
 GUNCELLEME: Dosya yuklendikten sonra kategorilendirme otomatik
 tetikleniyor - kullanicinin ekstra bir istek yapmasina gerek yok.
@@ -8,6 +8,13 @@ anlamli bir mesajla 400 Bad Request olarak donuyor.
 
 GUNCELLEME 3: DELETE /accounts/{account_id} endpoint'i eklendi - hesap
 sahipligi dogrulanip hesap (ve cascade ile tum islemleri) silinir.
+
+GUNCELLEME 4: POST /connect-bank endpoint'i eklendi - "Bankami Bagla"
+(Demo Open Banking) akisi. Kullanici bir banka adi secer, sistem
+otomatik olarak yeni bir hesap olusturup gercekci 6 aylik demo islem
+verisi ekler ve kategorilendirir. Gercek banka API entegrasyonu resmi
+lisans/ortaklik gerektirdigi icin, bu ozellik ayni kullanici deneyimini
+simule eder.
 """
 import uuid
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
@@ -55,6 +62,28 @@ def delete_account(
         db=db, account_id=account_id, user_id=current_user.id
     )
     service.delete_account(db=db, account=account)
+# ---------------------------------------------------------------------------
+# BANKAMI BAGLA (DEMO OPEN BANKING)
+# ---------------------------------------------------------------------------
+@router.post("/connect-bank", response_model=schemas.ConnectBankResult, status_code=status.HTTP_201_CREATED)
+def connect_bank(
+    payload: schemas.ConnectBankRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    'Bankami Bagla' akisi: kullanicinin sectigi banka adiyla yeni bir
+    hesap olusturur, gercekci 6 aylik demo islem gecmisi otomatik
+    uretip ekler ve kategorilendirir. Dosya yukleme gerektirmez.
+    """
+    account, imported_count, categorized_count = service.connect_bank(
+        db=db, user_id=current_user.id, bank_name=payload.bank_name
+    )
+    return schemas.ConnectBankResult(
+        account=schemas.AccountResponse.model_validate(account),
+        imported_count=imported_count,
+        categorized_count=categorized_count,
+    )
 # ---------------------------------------------------------------------------
 # TRANSACTIONS - UPLOAD
 # ---------------------------------------------------------------------------
@@ -109,4 +138,3 @@ def list_transactions(
     """Belirtilen hesabin islemlerini listeler."""
     service.verify_account_ownership(db=db, account_id=account_id, user_id=current_user.id)
     return service.list_transactions(db=db, account_id=account_id, limit=limit, offset=offset)
-

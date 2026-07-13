@@ -12,6 +12,8 @@ import Toast, { type ToastMessage } from "../components/Toast";
 import AssistantChat from "../components/AssistantChat";
 import GoalPlanner from "../components/GoalPlanner";
 
+const DEMO_BANKS = ["Ziraat Bankasi", "Garanti BBVA", "Is Bankasi", "Yapi Kredi", "Akbank"];
+
 function formatAmount(amount: string) {
   const n = parseFloat(amount);
   const sign = n >= 0 ? "+" : "";
@@ -177,6 +179,9 @@ export default function DashboardPage() {
   const [newBankName, setNewBankName] = useState("");
   const [newAccountNumber, setNewAccountNumber] = useState("");
 
+  const [showBankPicker, setShowBankPicker] = useState(false);
+  const [connectingBank, setConnectingBank] = useState<string | null>(null);
+
   useEffect(() => { loadAccounts(); }, []);
   useEffect(() => {
     if (selectedAccountId) loadTransactions(selectedAccountId);
@@ -253,6 +258,25 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleConnectBank(bankName: string) {
+    setConnectingBank(bankName);
+    try {
+      const result = await accountsApi.connectBank(bankName);
+      setAccounts((prev) => [...prev, result.account]);
+      setSelectedAccountId(result.account.id);
+      setShowBankPicker(false);
+      setHealthKey((k) => k + 1);
+      setToast({
+        type: "success",
+        text: `${bankName} baglandi. ${result.imported_count} islem cekildi, ${result.categorized_count} tanesi kategorilendirildi.`,
+      });
+    } catch (err) {
+      setToast({ type: "error", text: extractErrorMessage(err, "Bankaya baglanilamadi.") });
+    } finally {
+      setConnectingBank(null);
+    }
+  }
+
   async function handleFileUpload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !selectedAccountId) return;
@@ -312,9 +336,17 @@ export default function DashboardPage() {
         <section className="bg-white rounded-xl border border-slate-200 p-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-medium text-slate-700">Hesaplar</h2>
-            <button onClick={() => setShowNewAccountForm((v) => !v)} className="text-sm text-indigo-600 hover:underline">
-              + Yeni Hesap
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowBankPicker((v) => !v)}
+                className="text-sm text-emerald-600 hover:underline"
+              >
+                Bankami Bagla
+              </button>
+              <button onClick={() => setShowNewAccountForm((v) => !v)} className="text-sm text-indigo-600 hover:underline">
+                + Yeni Hesap
+              </button>
+            </div>
           </div>
 
           {isLoadingAccounts ? (
@@ -322,7 +354,7 @@ export default function DashboardPage() {
               <Spinner size={14} /> Hesaplar yukleniyor...
             </div>
           ) : accounts.length === 0 ? (
-            <p className="text-sm text-slate-400">Henuz hesap yok. "+ Yeni Hesap" ile baslayin.</p>
+            <p className="text-sm text-slate-400">Henuz hesap yok. "Bankami Bagla" ya da "+ Yeni Hesap" ile baslayin.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {accounts.map((acc) => (
@@ -353,6 +385,27 @@ export default function DashboardPage() {
                   </button>
                 </div>
               ))}
+            </div>
+          )}
+
+          {showBankPicker && (
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <p className="text-xs text-slate-500 mb-2">
+                Bir banka secin, islem gecmisiniz otomatik cekilsin (demo):
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {DEMO_BANKS.map((bank) => (
+                  <button
+                    key={bank}
+                    onClick={() => handleConnectBank(bank)}
+                    disabled={connectingBank !== null}
+                    className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 text-sm rounded-lg px-3 py-2 hover:bg-emerald-100 transition disabled:opacity-50"
+                  >
+                    {connectingBank === bank && <Spinner size={14} />}
+                    {connectingBank === bank ? "Baglaniyor..." : bank}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -443,7 +496,7 @@ export default function DashboardPage() {
                 </div>
               ) : transactions.length === 0 ? (
                 <p className="text-sm text-slate-400 p-4">
-                  Bu hesapta henuz islem yok. CSV yukleyin.
+                  Bu hesapta henuz islem yok. CSV yukleyin ya da bir banka baglayin.
                 </p>
               ) : (
                 <table className="w-full text-sm">

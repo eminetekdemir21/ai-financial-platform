@@ -13,8 +13,15 @@ islem olup olmadigini kontrol ediyor. Varsa, o satir atlanir.
 HESAP SILME: delete_account fonksiyonu eklendi. Account modelindeki
 cascade="all, delete-orphan" iliskisi sayesinde, bir hesap silindiginde
 ona bagli tum islemler de otomatik silinir.
+
+BANKAMI BAGLA (DEMO OPEN BANKING): connect_bank fonksiyonu eklendi.
+Gercek bir banka API'sine baglanmak resmi lisans gerektirdigi icin,
+bu fonksiyon ayni kullanici deneyimini simule eder: yeni bir hesap
+olusturur ve gercekci, otomatik uretilmis 6 aylik bir islem gecmisini
+dogrudan ekler - kullanicinin dosya secmesine gerek kalmaz.
 """
 
+import random
 import uuid
 from typing import BinaryIO
 
@@ -22,6 +29,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.domains.transactions import schemas
+from app.domains.transactions.demo_data_generator import generate_demo_transactions
 from app.domains.transactions.models import Account, Transaction
 from app.domains.transactions.parsers.transaction_parser import TransactionParser
 
@@ -80,6 +88,45 @@ def verify_account_ownership(db: Session, account_id: uuid.UUID, user_id: uuid.U
             detail="Hesap bulunamadi.",
         )
     return account
+
+
+def connect_bank(db: Session, user_id: uuid.UUID, bank_name: str) -> tuple[Account, int, int]:
+    """
+    'Bankami Bagla' akisi: yeni bir hesap olusturur, gercekci 6 aylik
+    demo islem verisi uretip dogrudan ekler, ardindan otomatik olarak
+    kategorilendirir. Kullanici hicbir dosya secmez.
+    """
+    masked_number = f"**** {random.randint(1000, 9999)}"
+    account = Account(
+        user_id=user_id,
+        bank_name=bank_name,
+        account_number_masked=masked_number,
+        currency="TRY",
+        current_balance=0,
+    )
+    db.add(account)
+    db.commit()
+    db.refresh(account)
+
+    demo_rows = generate_demo_transactions(months=6)
+    for row in demo_rows:
+        tx = Transaction(
+            account_id=account.id,
+            amount=row["amount"],
+            description=row["description"],
+            merchant=None,
+            transaction_date=row["transaction_date"],
+            source="open_banking_demo",
+        )
+        db.add(tx)
+    db.commit()
+
+    from app.domains.categorization import categorization_service
+    cat_stats = categorization_service.categorize_account_transactions(
+        db=db, account_id=account.id
+    )
+
+    return account, len(demo_rows), cat_stats["total_categorized"]
 
 
 # ---------------------------------------------------------------------------
