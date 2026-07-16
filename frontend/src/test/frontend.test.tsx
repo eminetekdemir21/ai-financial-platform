@@ -6,26 +6,26 @@ import { MemoryRouter } from "react-router-dom";
 function formatAmount(amount: string): string {
   const n = parseFloat(amount);
   const sign = n >= 0 ? "+" : "";
-  return `${sign}${n.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} â‚º`;
+  return `${sign}${n.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} ₺`;
 }
 
 describe("formatAmount", () => {
   it("pozitif tutari dogru formatlar", () => {
     const result = formatAmount("15000.00");
     expect(result).toContain("+");
-    expect(result).toContain("â‚º");
+    expect(result).toContain("₺");
   });
 
   it("negatif tutarda + isareti olmaz", () => {
     const result = formatAmount("-450.75");
     expect(result).not.toContain("+");
-    expect(result).toContain("â‚º");
+    expect(result).toContain("₺");
   });
 
   it("sifir tutari dogru formatlar", () => {
     const result = formatAmount("0");
     expect(result).toContain("+");
-    expect(result).toContain("â‚º");
+    expect(result).toContain("₺");
   });
 });
 

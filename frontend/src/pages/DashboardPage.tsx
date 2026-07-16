@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent } from "react";
+﻿import { useEffect, useState, type ChangeEvent } from "react";
 import { useAuth } from "../context/AuthContext";
 import * as accountsApi from "../api/accounts";
 import * as txApi from "../api/transactions";
@@ -11,6 +11,7 @@ import Spinner from "../components/Spinner";
 import Toast, { type ToastMessage } from "../components/Toast";
 import AssistantChat from "../components/AssistantChat";
 import GoalPlanner from "../components/GoalPlanner";
+import SavingsCoach from "../components/SavingsCoach";
 import WhatIfSimulator from "../components/WhatIfSimulator";
 
 const DEMO_BANKS = ["Ziraat Bankasi", "Garanti BBVA", "Is Bankasi", "Yapi Kredi", "Akbank"];
@@ -541,6 +542,7 @@ export default function DashboardPage() {
             </section>
 
             {/* Finansal Hedefler (AI Goal Planner) */}
+            <SavingsCoach accountId={selectedAccount.id} />
             <GoalPlanner accountId={selectedAccount.id} />
 
             {/* What-If Simulasyon */}
@@ -554,3 +556,6 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+
+
