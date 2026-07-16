@@ -11,7 +11,6 @@ import Spinner from "../components/Spinner";
 import Toast, { type ToastMessage } from "../components/Toast";
 import AssistantChat from "../components/AssistantChat";
 import GoalPlanner from "../components/GoalPlanner";
-import WhatIfSimulator from "../components/WhatIfSimulator";
 
 const DEMO_BANKS = ["Ziraat Bankasi", "Garanti BBVA", "Is Bankasi", "Yapi Kredi", "Akbank"];
 
@@ -542,9 +541,6 @@ export default function DashboardPage() {
 
             {/* Finansal Hedefler (AI Goal Planner) */}
             <GoalPlanner accountId={selectedAccount.id} />
-
-            {/* What-If Simulasyon */}
-            <WhatIfSimulator accountId={selectedAccount.id} />
 
             {/* AI Finansal Asistan */}
             <AssistantChat accountId={selectedAccount.id} />

@@ -4,12 +4,14 @@ from app.domains.auth.router import router as auth_router
 from app.domains.transactions.router import router as transactions_router
 from app.domains.financial_health.router import router as health_router
 from app.domains.goal_planner.router import router as goals_router
+from app.domains.simulation.router import router as simulation_router
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(auth_router)
 api_router.include_router(transactions_router)
 api_router.include_router(health_router)
 api_router.include_router(goals_router)
+api_router.include_router(simulation_router)
 
 try:
     from app.domains.categorization.categorization_router import router as cat_router
