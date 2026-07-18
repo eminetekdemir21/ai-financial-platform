@@ -28,7 +28,7 @@ SUBSCRIPTION_KEYWORDS = [
 REDUCIBLE_CATEGORIES = {
     "yemek": {"reduction": 0.25, "tip": "Haftada 1-2 gun yemek siparisi vermek yerine evde pisirin"},
     "alisveris": {"reduction": 0.20, "tip": "Aylık alışveriş listesi yaparak impuls alımları azaltın"},
-    "ulasim": {"reduction": 0.15, "tip": "Toplu taşıma veya karpoling ile ulaşım maliyetini düşürün"},
+    "ulaşım": {"reduction": 0.15, "tip": "Toplu taşıma veya karpoling ile ulaşım maliyetini düşürün"},
     "market": {"reduction": 0.10, "tip": "İndirim günlerini takip edin ve toplu alım yapın"},
 }
 
@@ -118,7 +118,7 @@ def _analyze_subscriptions(expenses: list[Transaction], months: float) -> list[O
         opps.append(Opportunity(
             type="abonelik",
             title="Birden fazla video platformu aboneliginiz var",
-            description=f"{', '.join(video_subs.keys())} aboneliklerine toplam aylik {total_video:.0f} TL oduyorsunuz. En ucuzunu tutup digerlerini iptal etseniz {saving:.0f} TL tasarruf edersiniz.",
+            description=f"{', '.join(video_subs.keys())} aboneliklerine toplam aylik {total_video:.0f} TL ödüyorsunuz. En ucuzunu tutup digerlerini iptal etseniz {saving:.0f} TL tasarruf edersiniz.",
             monthly_saving=Decimal(str(round(saving, 2))),
             annual_saving=Decimal(str(round(saving * 12, 2))),
             priority="yuksek",
@@ -126,19 +126,19 @@ def _analyze_subscriptions(expenses: list[Transaction], months: float) -> list[O
             action=f"En az kullandiginiz platformu iptal edin. Aylik {saving:.0f} TL tasarruf.",
         ))
 
-    # Birden fazla muzik aboneliği
+    # Birden fazla müzik aboneliği
     music_subs = {k: v for k, v in sub_totals.items() if k in ["spotify", "youtube"]}
     if len(music_subs) >= 2:
         saving = min(music_subs.values())
         opps.append(Opportunity(
             type="abonelik",
-            title="Cakisan muzik abonelikleri",
-            description=f"Hem Spotify hem YouTube Premium kullaniyorsunuz. Birini iptal ederek aylik {saving:.0f} TL tasarruf edebilirsiniz.",
+            title="Çakışan müzik abonelikleri",
+            description=f"Hem Spotify hem YouTube Premium kullanıyorsunuz. Birini iptal ederek aylik {saving:.0f} TL tasarruf edebilirsiniz.",
             monthly_saving=Decimal(str(round(saving, 2))),
             annual_saving=Decimal(str(round(saving * 12, 2))),
             priority="orta",
             category="abonelik",
-            action="YouTube Music veya Spotify'dan birini sectikten sonra digerini iptal edin.",
+            action="YouTube Music veya Spotify'dan birini seçtikten sonra digerini iptal edin.",
         ))
 
     # Toplam abonelik yuku fazlaysa
@@ -147,12 +147,12 @@ def _analyze_subscriptions(expenses: list[Transaction], months: float) -> list[O
         opps.append(Opportunity(
             type="abonelik",
             title="Yuksek abonelik maliyeti",
-            description=f"Aylik toplam {total_subs:.0f} TL abonelik oduyorsunuz. Kullanmadiginiz servisleri iptal etmeyi dusunun.",
+            description=f"Aylik toplam {total_subs:.0f} TL abonelik ödüyorsunuz. Kullanmadiginiz servisleri iptal etmeyi dusunun.",
             monthly_saving=Decimal(str(round(total_subs * 0.3, 2))),
             annual_saving=Decimal(str(round(total_subs * 0.3 * 12, 2))),
             priority="orta",
             category="abonelik",
-            action="Son 3 aydir kullanmadiginiz abonelikleri gozden gecirin ve iptal edin.",
+            action="Son 3 aydir kullanmadiginiz abonelikleri gözden gecirin ve iptal edin.",
         ))
 
     return opps
@@ -175,8 +175,8 @@ def _analyze_categories(expenses: list[Transaction], months: float) -> list[Oppo
 
             opps.append(Opportunity(
                 type="yuksek_harcama",
-                title=f"{cat.capitalize()} harcamanizi optimize edin",
-                description=f"Aylik ortalama {monthly_spend:.0f} TL {cat} harciyorsunuz. %{int(reduction_pct*100)} azaltmayla aylik {saving:.0f} TL tasarruf mumkun.",
+                title=f"{cat.capitalize()} harcamanızı optimize edin",
+                description=f"Aylik ortalama {monthly_spend:.0f} TL {cat} harcıyorsunuz. %{int(reduction_pct*100)} azaltmayla aylik {saving:.0f} TL tasarruf mumkun.",
                 monthly_saving=Decimal(str(round(saving, 2))),
                 annual_saving=Decimal(str(round(saving * 12, 2))),
                 priority="orta" if monthly_spend < 1000 else "yuksek",
@@ -207,13 +207,13 @@ def _analyze_merchants(expenses: list[Transaction], months: float) -> list[Oppor
         saving = monthly * 0.20
         opps.append(Opportunity(
             type="tekrar_eden",
-            title=f"Sik tekrar eden: {merchant}",
-            description=f"'{merchant}' icin ayda {merchant_counts[merchant]} kez, toplam {monthly:.0f} TL oduyorsunuz. Sikligi azaltarak tasarruf edebilirsiniz.",
+            title=f"Sık tekrar eden: {merchant}",
+            description=f"'{merchant}' icin ayda {merchant_counts[merchant]} kez, toplam {monthly:.0f} TL ödüyorsunuz. Sıklığı azaltarak tasarruf edebilirsiniz.",
             monthly_saving=Decimal(str(round(saving, 2))),
             annual_saving=Decimal(str(round(saving * 12, 2))),
             priority="dusuk",
             category="tekrar_eden",
-            action=f"Ayda {max(merchant_counts[merchant]-1, 1)} kez ile sinirlandirin.",
+            action=f"Ayda {max(merchant_counts[merchant]-1, 1)} kez ile sınırlayın.",
         ))
 
     return opps
@@ -250,7 +250,7 @@ def _generate_summary(opportunities: list[Opportunity], total_monthly: Decimal, 
     if high_priority > 0:
         summary += f" {high_priority} tanesi yuksek oncelikli."
     if float(sub_total) > 300:
-        summary += f" Abonelik harcamaniz aylik {float(sub_total):.0f} TL — gozden gecirmenizi oneririz."
+        summary += f" Abonelik harcamaniz aylik {float(sub_total):.0f} TL — gözden geçirmenizi öneririz."
 
     return summary
 

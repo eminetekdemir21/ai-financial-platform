@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent } from "react";
+﻿import { useEffect, useState, type ChangeEvent } from "react";
 import { useAuth } from "../context/AuthContext";
 import * as accountsApi from "../api/accounts";
 import * as txApi from "../api/transactions";
@@ -12,6 +12,7 @@ import Toast, { type ToastMessage } from "../components/Toast";
 import AssistantChat from "../components/AssistantChat";
 import GoalPlanner from "../components/GoalPlanner";
 import SavingsCoach from "../components/SavingsCoach";
+import OpportunityEngine from "../components/OpportunityEngine";
 import WhatIfSimulator from "../components/WhatIfSimulator";
 import "../dark-theme.css";
 
@@ -419,6 +420,7 @@ export default function DashboardPage() {
 
             {/* Satır 3: Goal Planner + Simulation */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <OpportunityEngine accountId={selectedAccount.id} />
               <GoalPlanner accountId={selectedAccount.id} />
               <WhatIfSimulator accountId={selectedAccount.id} />
             </div>
@@ -489,3 +491,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+
