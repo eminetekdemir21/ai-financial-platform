@@ -3,21 +3,23 @@ import * as goalsApi from "../api/goals";
 import type { Goal, GoalAnalysis } from "../api/goals";
 import Spinner from "./Spinner";
 
-interface Props {
-  accountId: string;
-}
+interface Props { accountId: string; }
 
-const PRIORITY_LABELS: Record<string, string> = {
-  low: "Dusuk",
-  medium: "Orta",
-  high: "Yuksek",
+const dk = {
+  card: "#1a1d27", card2: "#21253a", border: "rgba(255,255,255,0.08)", border2: "rgba(255,255,255,0.12)",
+  text: "#f1f1f3", muted: "#8b8fa8", hint: "#5a5e78",
+  green: "#00d68f", greenBg: "rgba(0,214,143,0.10)",
+  blue: "#5b8dee", blueBg: "rgba(91,141,238,0.10)",
+  red: "#ff6b6b", redBg: "rgba(255,107,107,0.10)",
+  amber: "#ffa940", amberBg: "rgba(255,169,64,0.10)",
 };
 
-const PRIORITY_COLORS: Record<string, string> = {
-  low: "bg-slate-100 text-slate-600",
-  medium: "bg-yellow-50 text-yellow-700 border border-yellow-200",
-  high: "bg-red-50 text-red-700 border border-red-200",
+const PRIORITY_COLORS: Record<string, { bg: string; text: string }> = {
+  low: { bg: "rgba(255,255,255,0.06)", text: dk.muted },
+  medium: { bg: dk.amberBg, text: dk.amber },
+  high: { bg: dk.redBg, text: dk.red },
 };
+const PRIORITY_LABELS: Record<string, string> = { low: "Dusuk", medium: "Orta", high: "Yuksek" };
 
 export default function GoalPlanner({ accountId }: Props) {
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -27,7 +29,6 @@ export default function GoalPlanner({ accountId }: Props) {
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Form state
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
@@ -35,288 +36,160 @@ export default function GoalPlanner({ accountId }: Props) {
   const [savings, setSavings] = useState("0");
   const [creating, setCreating] = useState(false);
 
-  useEffect(() => {
-    loadGoals();
-  }, [accountId]);
+  useEffect(() => { loadGoals(); }, [accountId]);
 
   async function loadGoals() {
     setLoading(true);
-    try {
-      const data = await goalsApi.listGoals(accountId);
-      setGoals(data);
-    } catch {
-      setError("Hedefler yuklenemedi.");
-    } finally {
-      setLoading(false);
-    }
+    try { const data = await goalsApi.listGoals(accountId); setGoals(data); }
+    catch { setError("Hedefler yuklenemedi."); }
+    finally { setLoading(false); }
   }
 
   async function handleCreate() {
-    if (!name || !amount || !date) {
-      setError("Hedef adi, tutar ve tarih zorunludur.");
-      return;
-    }
-    setCreating(true);
-    setError(null);
+    if (!name || !amount || !date) { setError("Hedef adi, tutar ve tarih zorunludur."); return; }
+    setCreating(true); setError(null);
     try {
-      await goalsApi.createGoal(accountId, {
-        name,
-        target_amount: parseFloat(amount),
-        target_date: date,
-        priority,
-        current_savings: parseFloat(savings) || 0,
-      });
-      setShowForm(false);
-      setName(""); setAmount(""); setDate(""); setPriority("medium"); setSavings("0");
+      await goalsApi.createGoal(accountId, { name, target_amount: parseFloat(amount), target_date: date, priority, current_savings: parseFloat(savings) || 0 });
+      setShowForm(false); setName(""); setAmount(""); setDate(""); setPriority("medium"); setSavings("0");
       await loadGoals();
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "Hedef olusturulamadi.");
-    } finally {
-      setCreating(false);
-    }
+    } catch (err: any) { setError(err?.response?.data?.detail ?? "Hedef olusturulamadi."); }
+    finally { setCreating(false); }
   }
 
   async function handleAnalyze(goal: Goal) {
-    setAnalysisLoading(true);
-    setSelectedAnalysis(null);
-    try {
-      const analysis = await goalsApi.analyzeGoal(goal.id, accountId);
-      setSelectedAnalysis(analysis);
-    } catch {
-      setError("Analiz yapilamadi.");
-    } finally {
-      setAnalysisLoading(false);
-    }
+    setAnalysisLoading(true); setSelectedAnalysis(null);
+    try { const a = await goalsApi.analyzeGoal(goal.id, accountId); setSelectedAnalysis(a); }
+    catch { setError("Analiz yapilamadi."); }
+    finally { setAnalysisLoading(false); }
   }
 
   async function handleDelete(goalId: string) {
     if (!window.confirm("Bu hedefi iptal etmek istiyor musunuz?")) return;
-    try {
-      await goalsApi.deleteGoal(goalId);
-      setGoals((prev) => prev.filter((g) => g.id !== goalId));
-      if (selectedAnalysis?.goal.id === goalId) setSelectedAnalysis(null);
-    } catch {
-      setError("Hedef silinemedi.");
-    }
+    try { await goalsApi.deleteGoal(goalId); setGoals(p => p.filter(g => g.id !== goalId)); if (selectedAnalysis?.goal.id === goalId) setSelectedAnalysis(null); }
+    catch { setError("Hedef silinemedi."); }
   }
 
+  const s: React.CSSProperties = { background: dk.card, border: `0.5px solid ${dk.border}`, borderRadius: "12px", padding: "16px" };
+  const input: React.CSSProperties = { background: dk.card2, border: `0.5px solid ${dk.border2}`, borderRadius: "8px", padding: "7px 12px", fontSize: "13px", color: dk.text, outline: "none", width: "100%", boxSizing: "border-box" };
+
   return (
-    <section className="bg-white rounded-xl border border-slate-200 p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-medium text-slate-700">Finansal Hedefler</h2>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="text-sm text-indigo-600 hover:underline"
-        >
-          + Yeni Hedef
-        </button>
+    <div style={s}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+        <div style={{ fontSize: "11px", color: dk.muted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Finansal Hedefler</div>
+        <button onClick={() => setShowForm(v => !v)} style={{ fontSize: "12px", color: dk.blue, background: "none", border: "none", cursor: "pointer" }}>+ Yeni Hedef</button>
       </div>
 
-      {error && (
-        <div className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2 mb-3">
-          {error}
-        </div>
-      )}
+      {error && <div style={{ fontSize: "12px", color: dk.red, background: dk.redBg, borderRadius: "8px", padding: "8px 12px", marginBottom: "10px" }}>{error}</div>}
 
-      {/* Hedef oluşturma formu */}
       {showForm && (
-        <div className="border border-slate-200 rounded-xl p-4 mb-4 bg-slate-50 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+        <div style={{ background: dk.card2, borderRadius: "10px", padding: "14px", marginBottom: "14px", border: `0.5px solid ${dk.border2}` }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
             <div>
-              <label className="block text-xs text-slate-500 mb-1">Hedef Adi</label>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="orn. Bilgisayar, Tatil"
-                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-400"
-              />
+              <div style={{ fontSize: "11px", color: dk.muted, marginBottom: "4px" }}>Hedef Adi</div>
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="orn. Bilgisayar" style={input} />
             </div>
             <div>
-              <label className="block text-xs text-slate-500 mb-1">Hedef Tutar (TL)</label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="80000"
-                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-400"
-              />
+              <div style={{ fontSize: "11px", color: dk.muted, marginBottom: "4px" }}>Tutar (TL)</div>
+              <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="80000" style={input} />
             </div>
             <div>
-              <label className="block text-xs text-slate-500 mb-1">Hedef Tarihi</label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-400"
-              />
+              <div style={{ fontSize: "11px", color: dk.muted, marginBottom: "4px" }}>Hedef Tarihi</div>
+              <input type="date" value={date} onChange={e => setDate(e.target.value)} style={input} />
             </div>
             <div>
-              <label className="block text-xs text-slate-500 mb-1">Mevcut Birikim (TL)</label>
-              <input
-                type="number"
-                value={savings}
-                onChange={(e) => setSavings(e.target.value)}
-                placeholder="0"
-                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-400"
-              />
+              <div style={{ fontSize: "11px", color: dk.muted, marginBottom: "4px" }}>Mevcut Birikim (TL)</div>
+              <input type="number" value={savings} onChange={e => setSavings(e.target.value)} placeholder="0" style={input} />
             </div>
           </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">Oncelik</label>
-            <select
-              value={priority}
-              onChange={(e) => setPriority(e.target.value)}
-              className="text-sm border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-400"
-            >
+          <div style={{ marginBottom: "10px" }}>
+            <div style={{ fontSize: "11px", color: dk.muted, marginBottom: "4px" }}>Oncelik</div>
+            <select value={priority} onChange={e => setPriority(e.target.value)} style={{ ...input, width: "auto" }}>
               <option value="low">Dusuk</option>
               <option value="medium">Orta</option>
               <option value="high">Yuksek</option>
             </select>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleCreate}
-              disabled={creating}
-              className="inline-flex items-center gap-2 bg-indigo-600 text-white text-sm rounded-lg px-4 py-1.5 hover:bg-indigo-700 transition disabled:opacity-50"
-            >
-              {creating && <Spinner size={14} />}
-              {creating ? "Olusturuluyor..." : "Hedef Olustur"}
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={handleCreate} disabled={creating}
+              style={{ display: "flex", alignItems: "center", gap: "6px", background: dk.blueBg, border: `1px solid ${dk.blue}`, color: dk.blue, borderRadius: "8px", padding: "7px 16px", fontSize: "13px", cursor: "pointer", opacity: creating ? 0.6 : 1 }}>
+              {creating && <Spinner size={13} />}{creating ? "Olusturuluyor..." : "Hedef Olustur"}
             </button>
-            <button
-              onClick={() => setShowForm(false)}
-              className="text-sm text-slate-500 hover:text-slate-700 px-3 py-1.5"
-            >
-              Iptal
-            </button>
+            <button onClick={() => setShowForm(false)} style={{ background: "none", border: "none", color: dk.muted, fontSize: "13px", cursor: "pointer" }}>Iptal</button>
           </div>
         </div>
       )}
 
-      {/* Hedef listesi */}
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-slate-400">
-          <Spinner size={14} /> Hedefler yukleniyor...
-        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", color: dk.muted, fontSize: "13px" }}><Spinner size={14} /> Yukleniyor...</div>
       ) : goals.length === 0 ? (
-        <p className="text-sm text-slate-400">
-          Henuz hedef yok. "+ Yeni Hedef" ile baslayin.
-        </p>
+        <p style={{ color: dk.hint, fontSize: "13px" }}>Henuz hedef yok. "+ Yeni Hedef" ile baslayin.</p>
       ) : (
-        <div className="space-y-2">
-          {goals.map((goal) => (
-            <div
-              key={goal.id}
-              className="flex items-center justify-between border border-slate-100 rounded-lg px-3 py-2.5 hover:bg-slate-50"
-            >
-              <div className="flex items-center gap-3">
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          {goals.map(goal => (
+            <div key={goal.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: dk.card2, borderRadius: "8px", padding: "10px 12px", border: `0.5px solid ${dk.border}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <div>
-                  <p className="text-sm font-medium text-slate-800">{goal.name}</p>
-                  <p className="text-xs text-slate-400">
-                    {parseFloat(goal.target_amount).toLocaleString("tr-TR")} TL
-                    {" · "}
-                    {new Date(goal.target_date).toLocaleDateString("tr-TR")}
-                  </p>
+                  <div style={{ fontSize: "13px", fontWeight: 500, color: dk.text }}>{goal.name}</div>
+                  <div style={{ fontSize: "11px", color: dk.hint }}>
+                    {parseFloat(goal.target_amount).toLocaleString("tr-TR")} TL · {new Date(goal.target_date).toLocaleDateString("tr-TR")}
+                  </div>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${PRIORITY_COLORS[goal.priority]}`}>
+                <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "20px", background: PRIORITY_COLORS[goal.priority]?.bg, color: PRIORITY_COLORS[goal.priority]?.text }}>
                   {PRIORITY_LABELS[goal.priority]}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleAnalyze(goal)}
-                  className="text-xs text-indigo-600 hover:underline"
-                >
-                  AI Analizi
-                </button>
-                <button
-                  onClick={() => handleDelete(goal.id)}
-                  className="text-xs text-slate-400 hover:text-red-500"
-                >
-                  Sil
-                </button>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button onClick={() => handleAnalyze(goal)} style={{ fontSize: "12px", color: dk.blue, background: "none", border: "none", cursor: "pointer" }}>AI Analizi</button>
+                <button onClick={() => handleDelete(goal.id)} style={{ fontSize: "12px", color: dk.hint, background: "none", border: "none", cursor: "pointer" }}>Sil</button>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* AI Analiz sonucu */}
       {analysisLoading && (
-        <div className="mt-4 flex items-center gap-2 text-sm text-slate-400">
-          <Spinner size={14} /> AI analiz yapiliyor...
-        </div>
+        <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "8px", color: dk.muted, fontSize: "13px" }}><Spinner size={14} /> Analiz yapiliyor...</div>
       )}
 
       {selectedAnalysis && (
-        <div className={`mt-4 rounded-xl p-4 border ${selectedAnalysis.is_achievable ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"}`}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-slate-800">
-              {selectedAnalysis.goal.name} — AI Analizi
-            </h3>
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${selectedAnalysis.is_achievable ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+        <div style={{ marginTop: "14px", borderRadius: "10px", padding: "14px", border: `0.5px solid ${selectedAnalysis.is_achievable ? "rgba(0,214,143,0.2)" : "rgba(255,169,64,0.2)"}`, background: selectedAnalysis.is_achievable ? "rgba(0,214,143,0.05)" : "rgba(255,169,64,0.05)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+            <span style={{ fontSize: "13px", fontWeight: 500, color: dk.text }}>{selectedAnalysis.goal.name} — AI Analizi</span>
+            <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "20px", background: selectedAnalysis.is_achievable ? dk.greenBg : dk.amberBg, color: selectedAnalysis.is_achievable ? dk.green : dk.amber }}>
               {selectedAnalysis.is_achievable ? "Ulasılabilir" : "Zor Gorunuyor"}
             </span>
           </div>
-
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div className="bg-white rounded-lg p-3 border border-slate-100">
-              <p className="text-xs text-slate-400">Gereken Aylik Tasarruf</p>
-              <p className="text-sm font-bold text-slate-800">
-                {parseFloat(selectedAnalysis.monthly_savings_needed).toLocaleString("tr-TR", { maximumFractionDigits: 0 })} TL
-              </p>
-            </div>
-            <div className="bg-white rounded-lg p-3 border border-slate-100">
-              <p className="text-xs text-slate-400">Mevcut Aylik Tasarruf</p>
-              <p className="text-sm font-bold text-emerald-600">
-                {parseFloat(selectedAnalysis.current_monthly_savings).toLocaleString("tr-TR", { maximumFractionDigits: 0 })} TL
-              </p>
-            </div>
-            <div className="bg-white rounded-lg p-3 border border-slate-100">
-              <p className="text-xs text-slate-400">Kalan Sure</p>
-              <p className="text-sm font-bold text-slate-800">
-                {selectedAnalysis.months_remaining} ay
-              </p>
-            </div>
-            <div className="bg-white rounded-lg p-3 border border-slate-100">
-              <p className="text-xs text-slate-400">Tahmini Tamamlanma</p>
-              <p className="text-sm font-bold text-slate-800">
-                {new Date(selectedAnalysis.estimated_completion_date).toLocaleDateString("tr-TR", { year: "numeric", month: "long" })}
-              </p>
-            </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "10px" }}>
+            {[
+              { label: "Gereken Aylik Tasarruf", value: `${parseFloat(selectedAnalysis.monthly_savings_needed).toLocaleString("tr-TR", { maximumFractionDigits: 0 })} TL`, color: dk.text },
+              { label: "Mevcut Aylik Tasarruf", value: `${parseFloat(selectedAnalysis.current_monthly_savings).toLocaleString("tr-TR", { maximumFractionDigits: 0 })} TL`, color: dk.green },
+              { label: "Kalan Sure", value: `${selectedAnalysis.months_remaining} ay`, color: dk.text },
+              { label: "Tahmini Tamamlanma", value: new Date(selectedAnalysis.estimated_completion_date).toLocaleDateString("tr-TR", { year: "numeric", month: "long" }), color: dk.text },
+            ].map(item => (
+              <div key={item.label} style={{ background: dk.card2, borderRadius: "8px", padding: "10px 12px" }}>
+                <div style={{ fontSize: "11px", color: dk.hint, marginBottom: "3px" }}>{item.label}</div>
+                <div style={{ fontSize: "14px", fontWeight: 500, color: item.color }}>{item.value}</div>
+              </div>
+            ))}
           </div>
-
-          <div className="bg-white rounded-lg p-3 border border-slate-100 mb-3">
-            <p className="text-xs text-slate-500 mb-1">AI Onerisi</p>
-            <p className="text-sm text-slate-700">{selectedAnalysis.ai_recommendation}</p>
+          <div style={{ background: dk.card2, borderRadius: "8px", padding: "10px 12px", marginBottom: "8px" }}>
+            <div style={{ fontSize: "11px", color: dk.hint, marginBottom: "4px" }}>AI Onerisi</div>
+            <p style={{ fontSize: "13px", color: dk.text, lineHeight: 1.5 }}>{selectedAnalysis.ai_recommendation}</p>
           </div>
-
           {selectedAnalysis.top_saving_opportunities.length > 0 && (
             <div>
-              <p className="text-xs text-slate-500 mb-2">Tasarruf Firsatlari</p>
-              <div className="space-y-1.5">
-                {selectedAnalysis.top_saving_opportunities.map((opp) => (
-                  <div key={opp.category} className="bg-white rounded-lg px-3 py-2 border border-slate-100 flex items-center justify-between">
-                    <span className="text-xs text-slate-700 capitalize">{opp.category}</span>
-                    <span className="text-xs text-slate-500">
-                      %20 azaltirsan →{" "}
-                      <span className="text-emerald-600 font-medium">
-                        +{opp.saving_20_percent.toLocaleString("tr-TR", { maximumFractionDigits: 0 })} TL/ay
-                      </span>
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <div style={{ fontSize: "11px", color: dk.hint, marginBottom: "6px" }}>Tasarruf Firsatlari</div>
+              {selectedAnalysis.top_saving_opportunities.map(opp => (
+                <div key={opp.category} style={{ display: "flex", justifyContent: "space-between", background: dk.card2, borderRadius: "6px", padding: "7px 12px", marginBottom: "4px" }}>
+                  <span style={{ fontSize: "12px", color: dk.muted, textTransform: "capitalize" }}>{opp.category}</span>
+                  <span style={{ fontSize: "12px", color: dk.green }}>+{opp.saving_20_percent.toLocaleString("tr-TR", { maximumFractionDigits: 0 })} TL/ay</span>
+                </div>
+              ))}
             </div>
           )}
-
-          <button
-            onClick={() => setSelectedAnalysis(null)}
-            className="mt-3 text-xs text-slate-400 hover:text-slate-600"
-          >
-            Kapat
-          </button>
+          <button onClick={() => setSelectedAnalysis(null)} style={{ marginTop: "8px", fontSize: "12px", color: dk.hint, background: "none", border: "none", cursor: "pointer" }}>Kapat</button>
         </div>
       )}
-    </section>
+    </div>
   );
 }

@@ -1,106 +1,115 @@
-import { useState, type KeyboardEvent } from "react";
-import * as assistantApi from "../api/assistant";
+import { useState } from "react";
+import { sendChatMessage } from "../api/assistant";
 import Spinner from "./Spinner";
 
-interface ChatMessage {
-  role: "user" | "assistant";
-  text: string;
+interface Message { role: "user" | "assistant"; text: string; }
+
+const dk = {
+  card: "#1a1d27", card2: "#21253a", border: "rgba(255,255,255,0.08)", border2: "rgba(255,255,255,0.12)",
+  text: "#f1f1f3", muted: "#8b8fa8", hint: "#5a5e78",
+  blue: "#5b8dee", blueBg: "rgba(91,141,238,0.10)",
+  red: "#ff6b6b",
+};
+
+const SUGGESTED = [
+  "Bu ay en cok hangi kategoriye harcama yaptim?",
+  "Tasarruf oranim nasil?",
+  "Supheli islem var mi?",
+  "Harcamalarimi nasil azaltabilirim?",
+];
+
+function renderText(text: string) {
+  // **bold** → <strong>, * liste → satır
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i} style={{ color: "#fff", fontWeight: 600 }}>{part.slice(2, -2)}</strong>;
+    }
+    // Satır başı * işaretlerini kaldır
+    return <span key={i}>{part.replace(/^\* /gm, "• ")}</span>;
+  });
 }
 
-interface AssistantChatProps {
-  accountId: string;
-}
-
-export default function AssistantChat({ accountId }: AssistantChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+export default function AssistantChat({ accountId }: { accountId: string }) {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [isSending, setIsSending] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSend() {
-    const trimmed = input.trim();
-    if (!trimmed || isSending) return;
-
-    setMessages((prev) => [...prev, { role: "user", text: trimmed }]);
-    setInput("");
-    setIsSending(true);
-    setError(null);
-
+  async function send(text: string) {
+    if (!text.trim()) return;
+    setMessages(p => [...p, { role: "user", text }]);
+    setInput(""); setLoading(true); setError(null);
     try {
-      const result = await assistantApi.sendChatMessage(accountId, trimmed);
-      setMessages((prev) => [...prev, { role: "assistant", text: result.reply }]);
+      const res = await sendChatMessage(accountId, text);
+      setMessages(p => [...p, { role: "assistant", text: res.reply }]);
     } catch (err: any) {
-      setError(
-        err.response?.data?.detail ??
-          "AI asistanina ulasilamadi. Lutfen daha sonra tekrar deneyin."
-      );
+      setError(err?.response?.data?.detail ?? "Asistana ulasilamadi.");
     } finally {
-      setIsSending(false);
-    }
-  }
-
-  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") {
-      handleSend();
+      setLoading(false);
     }
   }
 
   return (
-    <section className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col">
-      <h2 className="text-sm font-medium text-slate-700 mb-3">
-        AI Finansal Asistan
-      </h2>
+    <div style={{ background: dk.card, border: `0.5px solid ${dk.border}`, borderRadius: "12px", overflow: "hidden" }}>
+      <div style={{ padding: "12px 16px", borderBottom: `0.5px solid ${dk.border}` }}>
+        <div style={{ fontSize: "11px", color: dk.muted, textTransform: "uppercase", letterSpacing: "0.5px" }}>AI Finansal Asistan</div>
+        <div style={{ fontSize: "12px", color: dk.hint, marginTop: "2px" }}>Hesabınız hakkında soru sorun</div>
+      </div>
 
-      <div className="flex-1 space-y-3 mb-3 max-h-72 overflow-y-auto">
+      <div style={{ padding: "16px", minHeight: "180px", maxHeight: "360px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "10px" }}>
         {messages.length === 0 && (
-          <p className="text-sm text-slate-400">
-            Islemleriniz hakkinda soru sorun - orn. "Bu ay en cok nereye
-            harcadim?" veya "Tasarruf onerisi ver".
-          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div style={{ fontSize: "11px", color: dk.hint, marginBottom: "4px" }}>Örnek sorular:</div>
+            {SUGGESTED.map(q => (
+              <button key={q} onClick={() => send(q)}
+                style={{ textAlign: "left", fontSize: "12px", color: dk.blue, background: dk.blueBg, border: `0.5px solid rgba(91,141,238,0.2)`, borderRadius: "8px", padding: "8px 12px", cursor: "pointer" }}>
+                {q}
+              </button>
+            ))}
+          </div>
         )}
-        {messages.map((m, i) => (
-          <div
-            key={i}
-            className={`text-sm rounded-lg px-3 py-2 max-w-[85%] whitespace-pre-wrap ${
-              m.role === "user"
-                ? "bg-indigo-600 text-white ml-auto"
-                : "bg-slate-100 text-slate-800"
-            }`}
-          >
-            {m.text}
+
+        {messages.map((msg, i) => (
+          <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
+            {msg.role === "assistant" && (
+              <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: dk.blueBg, border: `0.5px solid rgba(91,141,238,0.3)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", flexShrink: 0, marginRight: "8px", marginTop: "2px" }}>
+                ⬡
+              </div>
+            )}
+            <div style={{
+              maxWidth: "78%", borderRadius: "10px", padding: "10px 14px", fontSize: "13px", lineHeight: 1.6,
+              background: msg.role === "user" ? dk.blue : dk.card2,
+              color: msg.role === "user" ? "#fff" : dk.text,
+              whiteSpace: "pre-wrap",
+            }}>
+              {msg.role === "assistant" ? renderText(msg.text) : msg.text}
+            </div>
           </div>
         ))}
-        {isSending && (
-          <div className="flex items-center gap-2 text-sm text-slate-400">
-            <Spinner size={14} />
-            Yaziyor...
+
+        {loading && (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: dk.blueBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", marginRight: "8px" }}>⬡</div>
+            <div style={{ background: dk.card2, borderRadius: "10px", padding: "10px 14px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <Spinner size={12} /><span style={{ fontSize: "12px", color: dk.muted }}>Düşünüyor...</span>
+            </div>
           </div>
         )}
+
+        {error && <div style={{ fontSize: "12px", color: dk.red, background: "rgba(255,107,107,0.08)", borderRadius: "8px", padding: "8px 12px" }}>{error}</div>}
       </div>
 
-      {error && (
-        <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-2">
-          {error}
-        </p>
-      )}
-
-      <div className="flex gap-2">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={isSending}
-          placeholder="Bir soru sorun..."
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:opacity-50"
-        />
-        <button
-          onClick={handleSend}
-          disabled={isSending || !input.trim()}
-          className="bg-indigo-600 text-white text-sm rounded-lg px-4 py-2 hover:bg-indigo-700 transition disabled:opacity-50"
-        >
-          Gonder
+      <div style={{ padding: "12px 16px", borderTop: `0.5px solid ${dk.border}`, display: "flex", gap: "8px" }}>
+        <input value={input} onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && !loading && send(input)}
+          placeholder="Sorunuzu yazın..." disabled={loading}
+          style={{ flex: 1, background: dk.card2, border: `0.5px solid ${dk.border2}`, borderRadius: "8px", padding: "9px 12px", fontSize: "13px", color: dk.text, outline: "none" }} />
+        <button onClick={() => send(input)} disabled={loading || !input.trim()}
+          style={{ background: dk.blueBg, border: `1px solid ${dk.blue}`, color: dk.blue, borderRadius: "8px", padding: "9px 18px", fontSize: "13px", cursor: "pointer", opacity: (loading || !input.trim()) ? 0.4 : 1 }}>
+          Gönder
         </button>
       </div>
-    </section>
+    </div>
   );
 }

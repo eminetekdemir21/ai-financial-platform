@@ -1,177 +1,96 @@
 import { useEffect, useState } from "react";
 import { getSavingsReport } from "../api/savingsCoach";
-import type { SavingsCoachReport, SavingTip, SpendingTrend } from "../api/savingsCoach";
+import type { SavingsCoachReport } from "../api/savingsCoach";
 import Spinner from "./Spinner";
 
-interface Props {
-  accountId: string;
-}
+interface Props { accountId: string; }
 
-const DIFFICULTY_COLORS: Record<string, string> = {
-  kolay: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  orta: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  zor: "bg-red-50 text-red-700 border-red-200",
+const dk = {
+  card: "#1a1d27", card2: "#21253a", border: "rgba(255,255,255,0.08)",
+  text: "#f1f1f3", muted: "#8b8fa8", hint: "#5a5e78",
+  green: "#00d68f", blue: "#5b8dee", red: "#ff6b6b", amber: "#ffa940",
+  redBg: "rgba(255,107,107,0.10)", amberBg: "rgba(255,169,64,0.10)",
 };
 
-const PRIORITY_COLORS: Record<string, string> = {
-  yuksek: "bg-red-50 text-red-600 border-red-200",
-  orta: "bg-yellow-50 text-yellow-600 border-yellow-200",
-  dusuk: "bg-slate-50 text-slate-500 border-slate-200",
-};
-
-const TREND_ICONS: Record<string, string> = {
-  artiyor: "↑",
-  azaliyor: "↓",
-  stabil: "→",
-};
-
-const TREND_COLORS: Record<string, string> = {
-  artiyor: "text-red-500",
-  azaliyor: "text-emerald-500",
-  stabil: "text-slate-400",
-};
-
-function formatTL(value: string | number) {
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  return num.toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + " ₺";
-}
-
-function SavingsRateBar({ current, target }: { current: number; target: number }) {
-  const pct = Math.min(current, 100);
-  const color = current >= target ? "bg-emerald-500" : current >= target / 2 ? "bg-yellow-500" : "bg-red-500";
-  return (
-    <div className="w-full bg-slate-100 rounded-full h-3 relative">
-      <div className={`h-3 rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
-      <div
-        className="absolute top-0 h-3 w-0.5 bg-slate-400"
-        style={{ left: `${target}%` }}
-        title={`Hedef: %${target}`}
-      />
-    </div>
-  );
+function fmt(v: string | number) {
+  const n = typeof v === "string" ? parseFloat(v) : v;
+  return `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString("tr-TR")} ₺`;
 }
 
 export default function SavingsCoach({ accountId }: Props) {
   const [report, setReport] = useState<SavingsCoachReport | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showTrends, setShowTrends] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    getSavingsReport(accountId)
-      .then(setReport)
-      .catch(() => setError("Tasarruf raporu yuklenemedi."))
-      .finally(() => setLoading(false));
+    getSavingsReport(accountId).then(setReport).catch(() => {}).finally(() => setLoading(false));
   }, [accountId]);
 
-  if (loading) {
-    return (
-      <section className="bg-white rounded-xl border border-slate-200 p-4">
-        <div className="flex items-center gap-2 text-sm text-slate-400">
-          <Spinner size={14} /> AI Savings Coach analiz yapıyor...
-        </div>
-      </section>
-    );
-  }
+  const s: React.CSSProperties = { background: dk.card, border: `0.5px solid ${dk.border}`, borderRadius: "12px", padding: "16px" };
+  const label: React.CSSProperties = { fontSize: "11px", color: dk.muted, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" };
 
-  if (error || !report) {
-    return (
-      <section className="bg-white rounded-xl border border-slate-200 p-4">
-        <p className="text-sm text-slate-400">{error ?? "Rapor yuklenemedi."}</p>
-      </section>
-    );
-  }
+  if (loading) return <div style={s}><div style={{ display:"flex", alignItems:"center", gap:"8px", color:dk.muted, fontSize:"13px" }}><Spinner size={14} /> Analiz yapiyor...</div></div>;
+  if (!report) return <div style={s}><p style={{ color:dk.muted, fontSize:"13px" }}>Rapor yuklenemedi.</p></div>;
+
+  const rate = report.current_savings_rate;
+  const rateColor = rate >= report.target_savings_rate ? dk.green : rate >= 10 ? dk.amber : dk.red;
 
   return (
-    <section className="bg-white rounded-xl border border-slate-200 p-5 space-y-5">
-      {/* Başlık */}
-      <div>
-        <h2 className="text-sm font-medium text-slate-700 mb-1">AI Savings Coach</h2>
-        <p className="text-xs text-slate-500">{report.coach_message}</p>
-      </div>
+    <div style={s}>
+      <div style={label}>AI Tasarruf Kocu</div>
+      <p style={{ fontSize:"12px", color:dk.hint, marginBottom:"14px", lineHeight:1.6 }}>{report.coach_message}</p>
 
-      {/* Tasarruf oranı */}
-      <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-slate-700">Tasarruf Oranı</span>
-          <div className="flex items-center gap-2">
-            <span className={`text-sm font-bold ${report.current_savings_rate >= report.target_savings_rate ? "text-emerald-600" : "text-yellow-600"}`}>
-              %{report.current_savings_rate.toFixed(1)}
-            </span>
-            <span className="text-xs text-slate-400">/ Hedef %{report.target_savings_rate}</span>
-          </div>
+      <div style={{ background:dk.card2, borderRadius:"8px", padding:"12px", marginBottom:"12px" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"8px" }}>
+          <span style={{ fontSize:"12px", color:dk.muted }}>Tasarruf Orani</span>
+          <span style={{ fontSize:"15px", fontWeight:500, color:rateColor }}>%{rate.toFixed(1)} <span style={{ fontSize:"11px", color:dk.hint }}>/ Hedef %{report.target_savings_rate}</span></span>
         </div>
-        <SavingsRateBar current={report.current_savings_rate} target={report.target_savings_rate} />
-        <div className="flex justify-between mt-2 text-xs text-slate-400">
-          <span>Aylık gelir: {formatTL(report.total_monthly_income)}</span>
-          <span>Aylık gider: {formatTL(report.total_monthly_expense)}</span>
+        <div style={{ background:"rgba(255,255,255,0.06)", borderRadius:"4px", height:"6px" }}>
+          <div style={{ height:"6px", borderRadius:"4px", background:rateColor, width:`${Math.min(rate,100)}%` }} />
+        </div>
+        <div style={{ display:"flex", justifyContent:"space-between", marginTop:"8px" }}>
+          <span style={{ fontSize:"11px", color:dk.hint }}>Gelir: {fmt(report.total_monthly_income)}</span>
+          <span style={{ fontSize:"11px", color:dk.hint }}>Gider: {fmt(report.total_monthly_expense)}</span>
         </div>
         {parseFloat(report.potential_annual_savings) > 0 && (
-          <div className="mt-2 text-xs text-emerald-600 font-medium">
-            Önerileri uygularsan yıllık +{formatTL(report.potential_annual_savings)} tasarruf potansiyeli
+          <div style={{ marginTop:"6px", fontSize:"12px", color:dk.green, fontWeight:500 }}>
+            Yillik +{fmt(report.potential_annual_savings)} potansiyel
           </div>
         )}
       </div>
 
-      {/* Tasarruf önerileri */}
       {report.tips.length > 0 && (
-        <div>
-          <h3 className="text-xs font-medium text-slate-700 mb-2">Kişisel Öneriler</h3>
-          <div className="space-y-2">
-            {report.tips.map((tip, i) => (
-              <div key={i} className="border border-slate-100 rounded-lg p-3">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <p className="text-sm font-medium text-slate-800">{tip.title}</p>
-                  <div className="flex gap-1 shrink-0">
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full border ${PRIORITY_COLORS[tip.priority] ?? PRIORITY_COLORS.orta}`}>
-                      {tip.priority}
-                    </span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full border ${DIFFICULTY_COLORS[tip.difficulty] ?? DIFFICULTY_COLORS.orta}`}>
-                      {tip.difficulty}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500 mb-2">{tip.description}</p>
-                <div className="flex gap-4 text-xs">
-                  <span className="text-emerald-600 font-medium">
-                    Aylık +{formatTL(tip.monthly_saving_potential)}
-                  </span>
-                  <span className="text-slate-400">
-                    Yıllık +{formatTL(tip.annual_saving_potential)}
-                  </span>
-                </div>
+        <div style={{ marginBottom:"12px" }}>
+          <div style={{ fontSize:"11px", color:dk.muted, textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:"8px" }}>Oneriler</div>
+          {report.tips.map((tip, i) => (
+            <div key={i} style={{ background:dk.card2, borderRadius:"8px", padding:"10px 12px", marginBottom:"6px", border:`0.5px solid ${dk.border}` }}>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"3px" }}>
+                <span style={{ fontSize:"13px", fontWeight:500, color:dk.text }}>{tip.title}</span>
+                <span style={{ fontSize:"10px", padding:"2px 6px", borderRadius:"20px", background:tip.priority==="yuksek"?dk.redBg:dk.amberBg, color:tip.priority==="yuksek"?dk.red:dk.amber }}>{tip.priority}</span>
               </div>
-            ))}
-          </div>
+              <p style={{ fontSize:"11px", color:dk.hint, marginBottom:"4px", lineHeight:1.5 }}>{tip.description}</p>
+              <span style={{ fontSize:"12px", color:dk.green, fontWeight:500 }}>Aylik {fmt(tip.monthly_saving_potential)}</span>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Harcama trendleri */}
-      <div>
-        <button
-          onClick={() => setShowTrends((v) => !v)}
-          className="text-xs text-indigo-600 hover:underline"
-        >
-          {showTrends ? "Trendleri Gizle" : "Harcama Trendlerini Gör"}
-        </button>
-
-        {showTrends && (
-          <div className="mt-2 space-y-1.5">
-            {report.spending_trends.map((trend) => (
-              <div key={trend.category} className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-lg border border-slate-100">
-                <span className="text-xs font-medium text-slate-700 capitalize">{trend.category}</span>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="text-slate-400">{formatTL(trend.current_monthly)}/ay</span>
-                  <span className={`font-medium ${TREND_COLORS[trend.trend]}`}>
-                    {TREND_ICONS[trend.trend]} {Math.abs(trend.change_pct).toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
+      <button onClick={() => setShowTrends(v => !v)} style={{ fontSize:"12px", color:dk.blue, background:"none", border:"none", cursor:"pointer", padding:0 }}>
+        {showTrends ? "Trendleri Gizle" : "Harcama Trendleri"}
+      </button>
+      {showTrends && (
+        <div style={{ marginTop:"8px", display:"flex", flexDirection:"column", gap:"4px" }}>
+          {report.spending_trends.map(t => (
+            <div key={t.category} style={{ display:"flex", justifyContent:"space-between", padding:"6px 10px", background:dk.card2, borderRadius:"6px" }}>
+              <span style={{ fontSize:"12px", color:dk.muted, textTransform:"capitalize" }}>{t.category}</span>
+              <span style={{ fontSize:"12px", fontWeight:500, color:t.trend==="artiyor"?dk.red:t.trend==="azaliyor"?dk.green:dk.hint }}>
+                {t.trend==="artiyor"?"↑":t.trend==="azaliyor"?"↓":"→"} {Math.abs(t.change_pct).toFixed(1)}%
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
