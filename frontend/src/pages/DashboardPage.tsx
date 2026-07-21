@@ -12,7 +12,6 @@ import Toast, { type ToastMessage } from "../components/Toast";
 import AssistantChat from "../components/AssistantChat";
 import GoalPlanner from "../components/GoalPlanner";
 import SavingsCoach from "../components/SavingsCoach";
-import OpportunityEngine from "../components/OpportunityEngine";
 import WhatIfSimulator from "../components/WhatIfSimulator";
 import "../dark-theme.css";
 
@@ -253,6 +252,25 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleDownloadPDF() {
+    const token = localStorage.getItem("access_token");
+    if (!selectedAccountId || !token) return;
+    try {
+      const res = await fetch(`http://localhost:8000/api/v1/reports/${selectedAccountId}/pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "finansal_rapor.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setToast({ type: "error", text: "PDF indirilemedi." });
+    }
+  }
+
   async function handleRunAI() {
     if (!selectedAccountId) return;
     setIsRunningAI(true);
@@ -398,6 +416,7 @@ export default function DashboardPage() {
                 {isRunningAI && <Spinner size={13} />}
                 {isRunningAI ? "Analiz ediliyor..." : "AI Analizi Calistir"}
               </button>
+              <button onClick={handleDownloadPDF} style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(0,214,143,0.10)", border: "0.5px solid #00d68f", color: "#00d68f", fontSize: "13px", borderRadius: "8px", padding: "7px 16px", cursor: "pointer" }}>PDF Raporu Indir</button>
             </div>
 
             {/* Satır 1: Health Score + Savings Coach */}
@@ -420,7 +439,6 @@ export default function DashboardPage() {
 
             {/* Satır 3: Goal Planner + Simulation */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-              <OpportunityEngine accountId={selectedAccount.id} />
               <GoalPlanner accountId={selectedAccount.id} />
               <WhatIfSimulator accountId={selectedAccount.id} />
             </div>

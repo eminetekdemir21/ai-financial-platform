@@ -6,6 +6,7 @@ from app.domains.goal_planner.router import router as goals_router
 from app.domains.simulation.router import router as simulation_router
 from app.domains.savings_coach.router import router as savings_router
 from app.domains.opportunity_engine.router import router as opportunity_router
+from app.domains.reports.router import router as reports_router
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(auth_router)
@@ -15,6 +16,7 @@ api_router.include_router(goals_router)
 api_router.include_router(simulation_router)
 api_router.include_router(savings_router)
 api_router.include_router(opportunity_router)
+api_router.include_router(reports_router)
 
 try:
     from app.domains.categorization.categorization_router import router as cat_router
