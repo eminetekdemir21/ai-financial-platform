@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { useAuth } from "../context/AuthContext";
 import * as accountsApi from "../api/accounts";
 import * as txApi from "../api/transactions";
@@ -10,6 +10,7 @@ import type { HealthScore } from "../api/healthApi";
 import Spinner from "../components/Spinner";
 import Toast, { type ToastMessage } from "../components/Toast";
 import AssistantChat from "../components/AssistantChat";
+import FraudExplanationModal from "../components/FraudExplanationModal";
 import GoalPlanner from "../components/GoalPlanner";
 import SavingsCoach from "../components/SavingsCoach";
 import WhatIfSimulator from "../components/WhatIfSimulator";
@@ -158,6 +159,7 @@ export default function DashboardPage() {
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [deletingAccountId, setDeletingAccountId] = useState<string | null>(null);
   const [healthKey, setHealthKey] = useState(0);
+  const [explainTx, setExplainTx] = useState<{id: string} | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [showNewAccountForm, setShowNewAccountForm] = useState(false);
   const [showDemoBanks, setShowDemoBanks] = useState(false);
@@ -249,25 +251,6 @@ export default function DashboardPage() {
     } finally {
       setIsUploading(false);
       e.target.value = "";
-    }
-  }
-
-  async function handleDownloadPDF() {
-    const token = localStorage.getItem("access_token");
-    if (!selectedAccountId || !token) return;
-    try {
-      const res = await fetch(`http://localhost:8000/api/v1/reports/${selectedAccountId}/pdf`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "finansal_rapor.pdf";
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      setToast({ type: "error", text: "PDF indirilemedi." });
     }
   }
 
@@ -416,7 +399,13 @@ export default function DashboardPage() {
                 {isRunningAI && <Spinner size={13} />}
                 {isRunningAI ? "Analiz ediliyor..." : "AI Analizi Calistir"}
               </button>
-              <button onClick={handleDownloadPDF} style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(0,214,143,0.10)", border: "0.5px solid #00d68f", color: "#00d68f", fontSize: "13px", borderRadius: "8px", padding: "7px 16px", cursor: "pointer" }}>PDF Raporu Indir</button>
+              <a
+                href={`http://localhost:8000/api/v1/reports/${selectedAccount.id}/pdf`}
+                download="finansal_rapor.pdf"
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(0,214,143,0.10)", border: "0.5px solid #00d68f", color: "#00d68f", fontSize: "13px", borderRadius: "8px", padding: "7px 16px", textDecoration: "none" }}
+              >
+                PDF Raporu Indir
+              </a>
             </div>
 
             {/* Satır 1: Health Score + Savings Coach */}
@@ -490,9 +479,14 @@ export default function DashboardPage() {
                           {formatAmount(tx.amount)}
                         </td>
                         <td style={{ padding: "10px 16px", textAlign: "right" }}>
-                          {tx.is_flagged
-                            ? <span style={{ fontSize: "11px", color: dk.red }}>Supheli ({tx.fraud_score})</span>
-                            : <span style={{ fontSize: "11px", color: dk.hint }}>—</span>}
+                          {tx.is_flagged ? (
+                            <button onClick={() => setExplainTx({id: tx.id})}
+                              style={{ fontSize: "11px", color: dk.red, background: "rgba(255,107,107,0.08)", border: "0.5px solid rgba(255,107,107,0.2)", borderRadius: "6px", padding: "2px 8px", cursor: "pointer" }}>
+                              Supheli · Neden?
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: "11px", color: dk.hint }}>—</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -503,11 +497,18 @@ export default function DashboardPage() {
 
             {/* AI Asistan */}
             <AssistantChat accountId={selectedAccount.id} />
+
+            {/* Fraud Aciklama Modal */}
+            {explainTx && selectedAccount && (
+              <FraudExplanationModal
+                accountId={selectedAccount.id}
+                transactionId={explainTx.id}
+                onClose={() => setExplainTx(null)}
+              />
+            )}
           </>
         )}
       </main>
     </div>
   );
 }
-
-
