@@ -14,6 +14,12 @@ async def lifespan(app: FastAPI):
     with engine.connect() as conn:
         conn.execute(text("SELECT 1"))
     print(f"[startup] {settings.PROJECT_NAME} ortam: {settings.ENVIRONMENT}")
+    from app.core.database import Base, engine
+    import app.domains.auth.models
+    import app.domains.transactions.models
+    import app.domains.goal_planner.models
+    import app.domains.simulation.models
+    Base.metadata.create_all(bind=engine)
     yield
     print("[shutdown] Uygulama kapatÄ±lÄ±yor")
 
@@ -52,4 +58,6 @@ def health_check() -> dict:
 
 
 app.include_router(api_router)
+
+
 
