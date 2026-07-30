@@ -1,1 +1,1 @@
-{"rewrites":[{"source":"/((?!api).*)","destination":"/index.html"}]}
+{"buildCommand":"vite build","rewrites":[{"source":"/((?!api).*)","destination":"/index.html"}]}

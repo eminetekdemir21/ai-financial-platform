@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+﻿import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Spinner from "../components/Spinner";
@@ -116,7 +116,7 @@ export default function LoginPage() {
                   disabled={isSubmitting}
                   style={{ background: "#5b8dee", color: "#fff", border: "none", borderRadius: 10, padding: "13px", fontSize: 15, fontWeight: 600 }}
                 >
-                  {isSubmitting ? <Spinner size="sm" /> : "Giriş Yap"}
+                  {isSubmitting ? <Spinner /> : "Giriş Yap"}
                 </button>
               </form>
 
@@ -131,3 +131,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
