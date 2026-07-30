@@ -1,1 +1,1 @@
-{"deploy":{"startCommand":"pip install -r backend/requirements.txt && cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8080"}}
+{"deploy":{"startCommand":"pip install -r backend/requirements.txt && cd backend && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8080"}}
