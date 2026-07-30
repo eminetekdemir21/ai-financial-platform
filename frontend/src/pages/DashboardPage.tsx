@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent } from "react";
+﻿import { useEffect, useState, type ChangeEvent } from "react";
 import { useAuth } from "../context/AuthContext";
 import * as accountsApi from "../api/accounts";
 import * as txApi from "../api/transactions";
@@ -6,7 +6,7 @@ import * as healthApi from "../api/healthApi";
 import { CategoryPieChart, MonthlyBarChart } from "../components/Charts";
 import type { Account } from "../api/accounts";
 import type { Transaction } from "../api/transactions";
-import type { HealthScore } from "../api/healthApi";
+interface HealthScore { score: number; grade: string; summary: string; breakdown?: any; }
 import Spinner from "../components/Spinner";
 import Toast, { type ToastMessage } from "../components/Toast";
 import AssistantChat from "../components/AssistantChat";
@@ -129,7 +129,7 @@ function HealthScoreCard({ accountId }: { accountId: string }) {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-        {Object.entries(health.breakdown).map(([key, factor]) => (
+        {Object.entries(health.breakdown).map(([key, factor]: [string, any]) => (
           <div key={key}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
               <span style={{ fontSize: "12px", color: dk.muted }}>{factor.label}</span>
@@ -512,3 +512,6 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+
+
