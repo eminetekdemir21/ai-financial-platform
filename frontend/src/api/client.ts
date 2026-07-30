@@ -1,7 +1,7 @@
 ﻿import axios from "axios";
 
 // Backend'in tum endpoint'leri /api/v1 altinda (bkz. backend/app/api/v1/router.py)
-const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000/api/v1";
+const BASE_URL = "https://ai-financial-platform-production.up.railway.app/api/v1";
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -35,4 +35,7 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+
+
 
