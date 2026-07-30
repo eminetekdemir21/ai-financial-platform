@@ -1,4 +1,4 @@
-﻿import { useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Spinner from "../components/Spinner";
@@ -34,7 +34,7 @@ export default function LoginPage() {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0f1117", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+    <div style={{ minHeight: "100vh", background: "#0f1117", display: "flex", position: "relative", overflow: "hidden" }}>
       {/* Arka plan ışık efektleri */}
       <div style={{ position: "absolute", top: "-100px", left: "-100px", width: "500px", height: "500px", borderRadius: "50%", background: "radial-gradient(circle, rgba(91,141,238,0.10) 0%, transparent 70%)", pointerEvents: "none" }} />
       <div style={{ position: "absolute", bottom: "-100px", right: "400px", width: "400px", height: "400px", borderRadius: "50%", background: "radial-gradient(circle, rgba(124,109,232,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
@@ -135,4 +135,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
