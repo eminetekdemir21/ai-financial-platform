@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { getOpportunities } from "../api/opportunities";
 import type { OpportunityReport, Opportunity } from "../api/opportunities";
 import Spinner from "./Spinner";
@@ -150,3 +150,4 @@ export default function OpportunityEngine({ accountId }: Props) {
     </div>
   );
 }
+

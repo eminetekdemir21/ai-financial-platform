@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { deleteScenario, getScenario, listScenarios, runSimulation, saveScenario } from "../api/simulation";
 import type { SavedScenarioSummary, SimulationResult } from "../api/simulation";
 import Spinner from "./Spinner";
@@ -75,14 +75,14 @@ export default function WhatIfSimulator({ accountId }: { accountId: string }) {
   async function handleLoadScenario(id: string) {
     try {
       const s = await getScenario(accountId, id);
-      if (s.payload.income_change) { setTab(0); setIncomeChange(String(s.payload.income_change)); }
-      else if (s.payload.one_time_expense) { setTab(1); setOneTimeExpense(String(s.payload.one_time_expense)); }
-      else if (s.payload.category_changes) {
+      if (s.request.income_change) { setTab(0); setIncomeChange(String(s.request.income_change)); }
+      else if (s.request.one_time_expense) { setTab(1); setOneTimeExpense(String(s.request.one_time_expense)); }
+      else if (s.request.category_changes) {
         setTab(2);
-        const [cat, pct] = Object.entries(s.payload.category_changes)[0];
+        const [cat, pct] = Object.entries(s.request.category_changes)[0];
         setCategoryName(cat); setCategoryPct(Math.round((pct as number) * 100));
       }
-      if (s.payload.description) setDescription(s.payload.description as string);
+      if (s.request.description) setDescription(s.request.description as string);
       setShowScenarios(false);
     } catch {}
   }
@@ -258,3 +258,4 @@ export default function WhatIfSimulator({ accountId }: { accountId: string }) {
     </div>
   );
 }
+
