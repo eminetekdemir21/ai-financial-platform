@@ -6,7 +6,7 @@ from sqlalchemy import text
 
 from app.api.v1.router import api_router
 from app.core.config import settings
-from app.core.database import engine
+from app.core.database import engine, Base
 
 
 @asynccontextmanager
@@ -14,7 +14,6 @@ async def lifespan(app: FastAPI):
     with engine.connect() as conn:
         conn.execute(text("SELECT 1"))
     print(f"[startup] {settings.PROJECT_NAME} ortam: {settings.ENVIRONMENT}")
-    from app.core.database import Base, engine
     import app.domains.auth.models
     import app.domains.transactions.models
     import app.domains.goal_planner.models
@@ -58,6 +57,8 @@ def health_check() -> dict:
 
 
 app.include_router(api_router)
+
+
 
 
 
