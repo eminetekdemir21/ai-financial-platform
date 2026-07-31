@@ -456,7 +456,7 @@ export default function DashboardPage() {
               ) : transactions.length === 0 ? (
                 <div style={{ padding: "16px", color: dk.muted, fontSize: "13px" }}>Bu hesapta henuz islem yok.</div>
               ) : (
-                <><div style={{ fontSize: "11px", color: "#5a5e78", textAlign: "right", marginBottom: "4px" }}>↔ Sagı kaydırın</div><div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: "500px" }}>
+                <><div style={{ fontSize: "11px", color: "#5a5e78", textAlign: "right", marginBottom: "4px" }}>↔ Saga kaydirin</div><div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: "500px" }}>
                   <thead>
                     <tr>
                       {["Tarih", "Aciklama", "Kategori", "Tutar", "Fraud"].map((h, i) => (
@@ -511,6 +511,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+
 
 
 
