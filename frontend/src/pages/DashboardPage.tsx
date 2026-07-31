@@ -456,7 +456,7 @@ export default function DashboardPage() {
               ) : transactions.length === 0 ? (
                 <div style={{ padding: "16px", color: dk.muted, fontSize: "13px" }}>Bu hesapta henuz islem yok.</div>
               ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: "500px" }}>
                   <thead>
                     <tr>
                       {["Tarih", "Aciklama", "Kategori", "Tutar", "Fraud"].map((h, i) => (
@@ -490,7 +490,7 @@ export default function DashboardPage() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
 
@@ -511,6 +511,8 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+
 
 
 
