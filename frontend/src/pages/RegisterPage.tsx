@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+﻿import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Spinner from "../components/Spinner";
@@ -20,7 +20,7 @@ export default function RegisterPage() {
       await register(email, password, fullName);
       navigate("/dashboard");
     } catch (err: any) {
-      setError(err.response?.data?.detail ?? "Kayit basarisiz. Bilgilerinizi kontrol edin.");
+      setError(typeof err?.response?.data?.detail === "string" ? err.response.data.detail : JSON.stringify(err?.response?.data?.detail) ?? "Kayit basarisiz." ?? "Kayit basarisiz. Bilgilerinizi kontrol edin.");
     } finally {
       setIsSubmitting(false);
     }
@@ -102,8 +102,8 @@ export default function RegisterPage() {
 
             <div style={{ marginBottom: "20px" }}>
               <label style={{ display: "block", fontSize: "11px", color: "#8b8fa8", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Şifre</label>
-              <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder="En az 6 karakter" style={inp}
+              <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
+                placeholder="En az 8 karakter" style={inp}
                 onFocus={(e) => e.target.style.borderColor = "#7c6de8"}
                 onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.12)"} />
             </div>
@@ -133,3 +133,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+
