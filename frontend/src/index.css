@@ -25,3 +25,11 @@ body {
     font-size: 24px !important;
   }
 }
+
+@media (max-width: 768px) {
+  .transactions-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
