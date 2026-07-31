@@ -400,8 +400,7 @@ export default function DashboardPage() {
                 {isRunningAI ? "Analiz ediliyor..." : "AI Analizi Calistir"}
               </button>
               <a
-                href={`http://localhost:8000/api/v1/reports/${selectedAccount.id}/pdf`}
-                download="finansal_rapor.pdf"
+                onClick={async (e) => { e.preventDefault(); const token = localStorage.getItem("access_token"); const res = await fetch(`https://ai-financial-platform-production.up.railway.app/api/v1/reports/${selectedAccount.id}/pdf`, {headers: {Authorization: `Bearer ${token}`}}); const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "finansal_rapor.pdf"; a.click(); }}
                 style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(0,214,143,0.10)", border: "0.5px solid #00d68f", color: "#00d68f", fontSize: "13px", borderRadius: "8px", padding: "7px 16px", textDecoration: "none" }}
               >
                 PDF Raporu Indir
@@ -512,6 +511,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+
 
 
 
