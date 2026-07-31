@@ -30,18 +30,4 @@ body {
 }
 
 
-@media (max-width: 768px) {
-  [style*='repeat(3, 1fr)'] {
-    grid-template-columns: 1fr !important;
-  }
-  [style*='repeat(2, 1fr)'] {
-    grid-template-columns: 1fr !important;
-  }
-  [style*='gridTemplateColumns: \"1fr 1fr\"'] {
-    grid-template-columns: 1fr !important;
-  }
-  [style*='width: 480px'] {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-}
+
