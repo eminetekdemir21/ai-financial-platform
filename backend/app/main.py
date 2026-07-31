@@ -1,33 +1,32 @@
 ﻿from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
-
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.database import engine, Base
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     with engine.connect() as conn:
-        conn.execute(text("SELECT 1"))
-    print(f"[startup] {settings.PROJECT_NAME} ortam: {settings.ENVIRONMENT}")
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        conn.commit()
     import app.domains.auth.models
     import app.domains.transactions.models
     import app.domains.goal_planner.models
     import app.domains.simulation.models
-    Base.metadata.create_all(bind=engine)
+    with engine.begin() as conn:
+        Base.metadata.create_all(bind=engine)
+    print(f"[startup] {settings.PROJECT_NAME} ortam: {settings.ENVIRONMENT}")
     yield
-    print("[shutdown] Uygulama kapatÄ±lÄ±yor")
+    print("[shutdown] Uygulama kapatiliyor")
 
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version="0.1.0",
-    docs_url="/docs" if not settings.is_production else None,
-    redoc_url="/redoc" if not settings.is_production else None,
+    docs_url="/docs",
+    redoc_url="/redoc",
     lifespan=lifespan,
 )
 
@@ -39,26 +38,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.get("/health", tags=["system"])
-def health_check() -> dict:
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        db_status = "ok"
-    except Exception as exc:
-        db_status = f"error: {exc}"
-
-    return {
-        "status": "ok",
-        "environment": settings.ENVIRONMENT,
-        "database": db_status,
-    }
-
-
-app.include_router(api_router)
-
-
-
-
-
+app.include_router(api_router, prefix="/api/v1")
