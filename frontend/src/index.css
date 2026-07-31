@@ -25,3 +25,13 @@ body {
     font-size: 24px !important;
   }
 }
+
+@media (max-width: 768px) {
+  table, thead, tbody, th, td, tr {
+    display: block !important;
+    width: 100% !important;
+  }
+  td:last-child, th:last-child {
+    text-align: left !important;
+  }
+}
